@@ -2,11 +2,21 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
     const upstream = "https://dns.google" + url.pathname + url.search;
-    const resp = await fetch(upstream, {
+
+    const headers = new Headers(request.headers);
+    headers.delete("host");
+
+    const init = {
       method: request.method,
-      headers: request.headers,
-      body: request.method === "POST" ? request.body : undefined,
-    });
+      headers,
+    };
+
+    if (request.method === "POST") {
+      init.body = request.body;
+      init.duplex = "half";
+    }
+
+    const resp = await fetch(upstream, init);
     return new Response(resp.body, {
       status: resp.status,
       headers: resp.headers,
