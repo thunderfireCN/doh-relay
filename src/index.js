@@ -12,17 +12,19 @@ export default {
     };
 
     if (request.method === "POST") {
-      init.body = request.body;
-      init.duplex = "half";
+      // 完整读出请求体,而不是当作流转发
+      init.body = await request.arrayBuffer();
     }
 
     const resp = await fetch(upstream, init);
 
-    // 关键修复：不透传原始响应头，只保留必要的
+    // 同样完整读出响应体
+    const respBody = await resp.arrayBuffer();
+
     const respHeaders = new Headers();
     respHeaders.set("content-type", resp.headers.get("content-type") || "application/dns-message");
 
-    return new Response(resp.body, {
+    return new Response(respBody, {
       status: resp.status,
       headers: respHeaders,
     });
